@@ -10,7 +10,7 @@ export const getById = async (id: string) => {
 };
 
 export const create = async (data: any) => {
-  // Optionally verify author existence
+  
   if (data.authorId) {
     const author = await AuthorsRepo.findById(data.authorId);
     if (!author) throw Object.assign(new Error('Author not found'), { status: 400 });
@@ -19,7 +19,7 @@ export const create = async (data: any) => {
 };
 
 export const update = async (id: string, data: any) => {
-  // Optionally verify author
+  
   if (data.authorId) {
     const author = await AuthorsRepo.findById(data.authorId);
     if (!author) throw Object.assign(new Error('Author not found'), { status: 400 });

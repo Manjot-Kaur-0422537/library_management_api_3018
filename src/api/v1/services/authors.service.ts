@@ -1,21 +1,29 @@
-import * as AuthorsRepo from '../repositories/authors.repository';
+import { AuthorsRepository } from "../repositories/authors.repository";
 
-export const getAll = async () => {
-  return AuthorsRepo.findAll();
-};
+export class AuthorsService {
+  private repo: AuthorsRepository;
 
-export const getById = async (id: string) => {
-  return AuthorsRepo.findById(id);
-};
+  constructor(repo: AuthorsRepository) {
+    this.repo = repo;
+  }
 
-export const create = async (data: any) => {
-  return AuthorsRepo.create(data);
-};
+  async getAuthors() {
+    return this.repo.getAllAuthors();
+  }
 
-export const update = async (id: string, data: any) => {
-  return AuthorsRepo.update(id, data);
-};
+  async getAuthor(id: string) {
+    return this.repo.getAuthorById(id);
+  }
 
-export const remove = async (id: string) => {
-  return AuthorsRepo.remove(id);
-};
+  async createAuthor(data: any) {
+    return this.repo.addAuthor(data);
+  }
+
+  async updateAuthor(id: string, data: any) {
+    return this.repo.updateAuthor(id, data);
+  }
+
+  async deleteAuthor(id: string) {
+    return this.repo.deleteAuthor(id);
+  }
+}

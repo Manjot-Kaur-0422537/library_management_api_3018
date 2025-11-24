@@ -26,7 +26,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.get('/', (_req, res) => res.json({ message: 'Library Management API - v1' }));
 
-// Error handler (basic)
+// Error handler 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });

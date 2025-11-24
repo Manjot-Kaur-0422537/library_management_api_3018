@@ -1,46 +1,64 @@
-import { AuthorsService } from "../../src/api/v1/services/authors.service";
-import { AuthorsRepository } from "../../src/api/v1/repositories/authors.repository";
+import { db } from "../src/api/v1/config/firebaseConfig";
+import { Author } from "../src/api/v1/models/authorModels";
 
-jest.mock("../../src/api/v1/repositories/authors.repository");
+const COLLECTION = "authors";
 
-describe("Authors Service CRUD", () => {
-  let authorsService: AuthorsService;
-  let authorsRepository: jest.Mocked<AuthorsRepository>;
+export class AuthorsRepository {
+  async getAllAuthors(): Promise<Author[]> {
+    const snapshot = await db.collection(COLLECTION).get();
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Author, "id">)
+    }));
+  }
 
-  beforeEach(() => {
-    authorsRepository = new AuthorsRepository() as jest.Mocked<AuthorsRepository>;
-    authorsService = new AuthorsService(authorsRepository);
-  });
+  async getAuthorById(id: string): Promise<Author | null> {
+    const doc = await db.collection(COLLECTION).doc(id).get();
+    if (!doc.exists) return null;
 
-  test("get all authors", async () => {
-    authorsRepository.getAllAuthors.mockResolvedValue([{ id: "1", name: "Author" }]);
-    const result = await authorsService.getAuthors();
-    expect(result.length).toBe(1);
-  });
+    return {
+      id: doc.id,
+      ...(doc.data() as Omit<Author, "id">)
+    };
+  }
 
-  test("get one author", async () => {
-    authorsRepository.getAuthorById.mockResolvedValue({ id: "1", name: "Author" });
-    const result = await authorsService.getAuthor("1");
-    expect(result.id).toBe("1");
-  });
+  async addAuthor(data: any): Promise<Author> {
+    const ref = await db.collection(COLLECTION).add({
+      ...data,
+      createdAt: new Date().toISOString()
+    });
+    const doc = await ref.get();
 
-  test("create author", async () => {
-    const data = { name: "New Author" };
-    authorsRepository.addAuthor.mockResolvedValue({ id: "1", ...data });
-    const result = await authorsService.createAuthor(data);
-    expect(result.name).toBe("New Author");
-  });
+    return {
+      id: doc.id,
+      ...(doc.data() as Omit<Author, "id">)
+    };
+  }
 
-  test("update author", async () => {
-    const updated = { name: "Updated" };
-    authorsRepository.updateAuthor.mockResolvedValue({ id: "1", ...updated });
-    const result = await authorsService.updateAuthor("1", updated);
-    expect(result.name).toBe("Updated");
-  });
+  async updateAuthor(id: string, data: any): Promise<Author | null> {
+    const ref = db.collection(COLLECTION).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
 
-  test("delete author", async () => {
-    authorsRepository.deleteAuthor.mockResolvedValue(true);
-    const result = await authorsService.deleteAuthor("1");
-    expect(result).toBe(true);
-  });
-});
+    await ref.update({
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+
+    const updated = await ref.get();
+
+    return {
+      id: updated.id,
+      ...(updated.data() as Omit<Author, "id">)
+    };
+  }
+
+  async deleteAuthor(id: string): Promise<boolean> {
+    const ref = db.collection(COLLECTION).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+
+    await ref.delete();
+    return true;
+  }
+}

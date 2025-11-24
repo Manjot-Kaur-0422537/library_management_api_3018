@@ -1,5 +1,5 @@
-import { BorrowService } from "../../src/api/v1/services/borrow.service";
-import { BorrowRepository } from "../../src/api/v1/repositories/borrow.repository";
+import { BorrowService } from "../src/api/v1/services/borrow.service";
+import { BorrowRepository } from "../src/api/v1/repositories/borrow.repository";
 
 jest.mock("../../src/api/v1/repositories/borrow.repository");
 

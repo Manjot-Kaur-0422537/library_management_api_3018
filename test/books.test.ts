@@ -1,5 +1,5 @@
-import { BooksService } from "../../src/api/v1/services/books.service";
-import { BooksRepository } from "../../src/api/v1/repositories/books.repository";
+import { BooksService } from "../src/api/v1/services/books.service";
+import { BooksRepository } from "../src/api/v1/repositories/books.repository";
 
 jest.mock("../../src/api/v1/repositories/books.repository");
 
