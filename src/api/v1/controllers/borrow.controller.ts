@@ -1,28 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
-import * as BorrowService from '../services/borrow.service';
-import * as Joi from 'joi';
+import { Request, Response } from "express";
+import { BorrowService } from "../services/borrow.service";
+import { BorrowRepository } from "../repositories/borrow.repository";
 
-const borrowSchema = Joi.object({
-  bookId: Joi.string().required(),
-  userId: Joi.string().required(),
-  borrowDate: Joi.date().optional(),
-  dueDate: Joi.date().optional(),
-});
+const borrowService = new BorrowService(new BorrowRepository());
 
-export const borrowBook = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { error, value } = borrowSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.message });
-    const record = await BorrowService.borrow(value);
-    res.status(201).json(record);
-  } catch (err) { next(err); }
+export const borrowBook = async (req: Request, res: Response) => {
+  const borrowData = req.body;
+  const result = await borrowService.borrowBook(borrowData); // instance method
+  res.json(result);
 };
 
-export const returnBook = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = req.params.id;
-    const record = await BorrowService.returnBorrow(id);
-    if (!record) return res.status(404).json({ message: 'Borrow record not found' });
-    res.json(record);
-  } catch (err) { next(err); }
+export const returnBook = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await borrowService.returnBook(id); // instance method
+  res.json(result);
 };

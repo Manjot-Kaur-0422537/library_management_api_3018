@@ -1,30 +1,33 @@
-import * as BooksRepo from '../repositories/books.repository';
-import * as AuthorsRepo from '../repositories/authors.repository';
+import { BorrowRepository, BorrowRecord } from "../repositories/borrow.repository";
 
-export const getAll = async () => {
-  return BooksRepo.findAll();
-};
+export class BorrowService {
+  private repo: BorrowRepository;
 
-export const getById = async (id: string) => {
-  return BooksRepo.findById(id);
-};
-
-export const create = async (data: any) => {
-  if (data.authorId) {
-    const author = await AuthorsRepo.findById(data.authorId);
-    if (!author) throw Object.assign(new Error("Author not found"), { status: 400 });
+  constructor(repo: BorrowRepository) {
+    this.repo = repo;
   }
-  return BooksRepo.create(data);
-};
 
-export const update = async (id: string, data: any) => {
-  if (data.authorId) {
-    const author = await AuthorsRepo.findById(data.authorId);
-    if (!author) throw Object.assign(new Error("Author not found"), { status: 400 });
+  async borrowBook(data: { bookId: string; userId: string }): Promise<BorrowRecord> {
+    return this.repo.borrowBook(data);
   }
-  return BooksRepo.update(id, data);
-};
 
-export const remove = async (id: string) => {
-  return BooksRepo.remove(id);
-};
+  async returnBook(id: string): Promise<boolean> {
+    return this.repo.returnBook(id);
+  }
+
+  async getAll(): Promise<BorrowRecord[]> {
+    return this.repo.findAll();
+  }
+
+  async getById(id: string): Promise<BorrowRecord | null> {
+    return this.repo.findById(id);
+  }
+
+  async update(id: string, data: Partial<{ bookId: string; userId: string }>): Promise<BorrowRecord | null> {
+    return this.repo.update(id, data);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.repo.remove(id);
+  }
+}

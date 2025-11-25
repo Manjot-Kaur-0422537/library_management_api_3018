@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import admin from "../config/firebaseConfig";
+import * as admin from "firebase-admin"; 
 
-// Simple Firebase Auth check
 export const authMiddleware = async (
   req: Request,
   res: Response,
@@ -16,10 +15,8 @@ export const authMiddleware = async (
 
     const token = authHeader.split(" ")[1];
 
-    // Verify token with Firebase Admin
     const decoded = await admin.auth().verifyIdToken(token);
 
-    // Save user info in request
     (req as any).user = decoded;
 
     next();

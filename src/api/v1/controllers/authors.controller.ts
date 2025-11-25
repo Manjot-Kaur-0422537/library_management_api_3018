@@ -1,51 +1,62 @@
-import { Request, Response, NextFunction } from 'express';
-import * as AuthorsService from '../services/authors.service';
-import  * as Joi from 'joi';
+import { Request, Response } from 'express';
+import * as AuthorsRepo from '../repositories/authors.repository';
 
-const authorSchema = Joi.object({
-  name: Joi.string().required(),
-  bio: Joi.string().allow('').optional(),
-  birthYear: Joi.number().integer().optional(),
-});
-
-export const getAllAuthors = async (_req: Request, res: Response, next: NextFunction) => {
+export const getAll = async (req: Request, res: Response) => {
   try {
-    const authors = await AuthorsService.getAll();
+    const authors = await AuthorsRepo.findAll();
     res.json(authors);
-  } catch (err) { next(err); }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-export const getAuthorById = async (req: Request, res: Response, next: NextFunction) => {
+export const getById = async (req: Request, res: Response) => {
   try {
-    const author = await AuthorsService.getById(req.params.id);
-    if (!author) return res.status(404).json({ message: 'Author not found' });
+    const author = await AuthorsRepo.findById(req.params.id);
+
+    if (!author) {
+      return res.status(404).json({ error: 'Author not found' });
+    }
+
     res.json(author);
-  } catch (err) { next(err); }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-export const createAuthor = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (req: Request, res: Response) => {
   try {
-    const { error, value } = authorSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.message });
-    const created = await AuthorsService.create(value);
-    res.status(201).json(created);
-  } catch (err) { next(err); }
+    const newAuthor = await AuthorsRepo.create(req.body);
+    res.status(201).json(newAuthor);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-export const updateAuthor = async (req: Request, res: Response, next: NextFunction) => {
+export const update = async (req: Request, res: Response) => {
   try {
-    const { error, value } = authorSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.message });
-    const updated = await AuthorsService.update(req.params.id, value);
-    if (!updated) return res.status(404).json({ message: 'Author not found' });
-    res.json(updated);
-  } catch (err) { next(err); }
+    const updatedAuthor = await AuthorsRepo.update(req.params.id, req.body);
+
+    if (!updatedAuthor) {
+      return res.status(404).json({ error: 'Author not found' });
+    }
+
+    res.json(updatedAuthor);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-export const deleteAuthor = async (req: Request, res: Response, next: NextFunction) => {
+export const remove = async (req: Request, res: Response) => {
   try {
-    const deleted = await AuthorsService.remove(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Author not found' });
-    res.status(204).send();
-  } catch (err) { next(err); }
+    const deleted = await AuthorsRepo.remove(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Author not found' });
+    }
+
+    res.json({ message: 'Author deleted' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };

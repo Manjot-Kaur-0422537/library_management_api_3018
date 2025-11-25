@@ -1,6 +1,5 @@
 import express from 'express';
 import helmet from 'helmet';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import booksRoutes from './api/v1/routes/books.routes';
 import authorsRoutes from './api/v1/routes/authors.routes';
@@ -13,20 +12,16 @@ dotenv.config();
 const app = express();
 
 app.use(helmet());
-app.use(cors());
 app.use(express.json());
 
-// API versioning
 app.use('/api/v1/books', booksRoutes);
 app.use('/api/v1/authors', authorsRoutes);
 app.use('/api/v1/borrow', borrowRoutes);
 
-// Swagger docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.get('/', (_req, res) => res.json({ message: 'Library Management API - v1' }));
 
-// Error handler 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });

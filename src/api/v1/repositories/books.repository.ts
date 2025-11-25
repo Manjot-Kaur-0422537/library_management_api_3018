@@ -1,40 +1,33 @@
 import { db } from '../config/firebaseConfig';
 
-const COLLECTION = 'books';
+const booksCollection = db.collection("books");
 
 export const findAll = async () => {
-  const snapshot = await db.collection(COLLECTION).get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const snapshot = await booksCollection.get();
+  return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 };
 
 export const findById = async (id: string) => {
-  const doc = await db.collection(COLLECTION).doc(id).get();
-  if (!doc.exists) return null;
-  return { id: doc.id, ...doc.data() };
+  const doc = await booksCollection.doc(id).get();
+  return doc.exists ? { id: doc.id, ...doc.data() } : null;
 };
 
 export const create = async (data: any) => {
-  const ref = await db.collection(COLLECTION).add({
-    ...data,
-    createdAt: new Date().toISOString(),
-  });
-  const doc = await ref.get();
-  return { id: doc.id, ...doc.data() };
+  const docRef = await booksCollection.add(data);
+  const newDoc = await docRef.get();
+  return { id: newDoc.id, ...newDoc.data() };
 };
 
 export const update = async (id: string, data: any) => {
-  const ref = db.collection(COLLECTION).doc(id);
-  const doc = await ref.get();
-  if (!doc.exists) return null;
-  await ref.update({ ...data, updatedAt: new Date().toISOString() });
-  const updated = await ref.get();
-  return { id: updated.id, ...updated.data() };
+  await booksCollection.doc(id).update(data);
+  const updatedDoc = await booksCollection.doc(id).get();
+  return { id: updatedDoc.id, ...updatedDoc.data() };
 };
 
 export const remove = async (id: string) => {
-  const ref = db.collection(COLLECTION).doc(id);
-  const doc = await ref.get();
-  if (!doc.exists) return false;
-  await ref.delete();
-  return true;
+  const doc = await booksCollection.doc(id).get();
+  if (!doc.exists) return null;
+
+  await booksCollection.doc(id).delete();
+  return { id: doc.id, ...doc.data() };
 };

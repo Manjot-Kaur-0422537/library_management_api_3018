@@ -1,64 +1,85 @@
-import { db } from "../src/api/v1/config/firebaseConfig";
-import { Author } from "../src/api/v1/models/authorModels";
+import * as AuthorsRepo from "../src/api/v1/repositories/authors.repository";
+import * as AuthorsService from "../src/api/v1/services/authors.service";
 
-const COLLECTION = "authors";
+jest.mock("../src/api/v1/repositories/authors.repository");
 
-export class AuthorsRepository {
-  async getAllAuthors(): Promise<Author[]> {
-    const snapshot = await db.collection(COLLECTION).get();
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Author, "id">)
-    }));
-  }
+const mockedAuthorsRepo = jest.mocked(AuthorsRepo);
 
-  async getAuthorById(id: string): Promise<Author | null> {
-    const doc = await db.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return null;
+describe("Authors Service CRUD", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-    return {
-      id: doc.id,
-      ...(doc.data() as Omit<Author, "id">)
-    };
-  }
+  test("getAll should return a list of authors", async () => {
+    const mockAuthors = [
+      { id: "1", name: "Author One" },
+      { id: "2", name: "Author Two" }
+    ];
 
-  async addAuthor(data: any): Promise<Author> {
-    const ref = await db.collection(COLLECTION).add({
-      ...data,
-      createdAt: new Date().toISOString()
-    });
-    const doc = await ref.get();
+    mockedAuthorsRepo.findAll.mockResolvedValue(mockAuthors);
 
-    return {
-      id: doc.id,
-      ...(doc.data() as Omit<Author, "id">)
-    };
-  }
+    const result = await AuthorsService.getAll();
 
-  async updateAuthor(id: string, data: any): Promise<Author | null> {
-    const ref = db.collection(COLLECTION).doc(id);
-    const doc = await ref.get();
-    if (!doc.exists) return null;
+    expect(result).toEqual(mockAuthors);
+    expect(mockedAuthorsRepo.findAll).toHaveBeenCalled();
+  });
 
-    await ref.update({
-      ...data,
-      updatedAt: new Date().toISOString()
-    });
+  test("getById should return author if found", async () => {
+    const mockAuthor = { id: "1", name: "Author One" };
 
-    const updated = await ref.get();
+    mockedAuthorsRepo.findById.mockResolvedValue(mockAuthor);
 
-    return {
-      id: updated.id,
-      ...(updated.data() as Omit<Author, "id">)
-    };
-  }
+    const result = await AuthorsService.getById("1");
 
-  async deleteAuthor(id: string): Promise<boolean> {
-    const ref = db.collection(COLLECTION).doc(id);
-    const doc = await ref.get();
-    if (!doc.exists) return false;
+    expect(result).toEqual(mockAuthor);
+    expect(mockedAuthorsRepo.findById).toHaveBeenCalledWith("1");
+  });
 
-    await ref.delete();
-    return true;
-  }
-}
+  test("getById should return null if author not found", async () => {
+    mockedAuthorsRepo.findById.mockResolvedValue(null);
+
+    const result = await AuthorsService.getById("999");
+
+    expect(result).toBeNull();
+  });
+
+  test("create should return newly created author", async () => {
+    const newAuthor = { name: "New Author" };
+    const mockCreated = { id: "123", name: "New Author" };
+
+    mockedAuthorsRepo.create.mockResolvedValue(mockCreated);
+
+    const result = await AuthorsService.create(newAuthor);
+
+    expect(result).toEqual(mockCreated);
+    expect(mockedAuthorsRepo.create).toHaveBeenCalledWith(newAuthor);
+  });
+
+  test("update should return updated author", async () => {
+    const updated = { id: "1", name: "Updated Author" };
+
+    mockedAuthorsRepo.update.mockResolvedValue(updated);
+
+    const result = await AuthorsService.update("1", { name: "Updated Author" });
+
+    expect(result).toEqual(updated);
+    expect(mockedAuthorsRepo.update).toHaveBeenCalledWith("1", { name: "Updated Author" });
+  });
+
+  test("delete should return true if deleted", async () => {
+    mockedAuthorsRepo.remove.mockResolvedValue(true);
+
+    const result = await AuthorsService.remove("1");
+
+    expect(result).toBe(true);
+    expect(mockedAuthorsRepo.remove).toHaveBeenCalledWith("1");
+  });
+
+  test("delete should return false if not found", async () => {
+    mockedAuthorsRepo.remove.mockResolvedValue(false);
+
+    const result = await AuthorsService.remove("999");
+
+    expect(result).toBe(false);
+  });
+});

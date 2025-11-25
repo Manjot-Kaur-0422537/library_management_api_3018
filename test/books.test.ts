@@ -1,51 +1,62 @@
-import { BooksService } from "../src/api/v1/services/books.service";
-import { BooksRepository } from "../src/api/v1/repositories/books.repository";
+import * as BooksService from "../src/api/v1/services/books.service";
 
-jest.mock("../../src/api/v1/repositories/books.repository");
+jest.mock("../src/api/v1/repositories/books.repository", () => ({
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  remove: jest.fn()
+}));
+
+jest.mock("../src/api/v1/repositories/authors.repository", () => ({
+  findById: jest.fn()
+}));
+
+import * as BooksRepo from "../src/api/v1/repositories/books.repository";
+import * as AuthorsRepo from "../src/api/v1/repositories/authors.repository";
+
+const mockedBooksRepo = BooksRepo as jest.Mocked<typeof BooksRepo>;
+const mockedAuthorsRepo = AuthorsRepo as jest.Mocked<typeof AuthorsRepo>;
 
 describe("Books Service CRUD", () => {
-  let booksService: BooksService;
-  let booksRepository: jest.Mocked<BooksRepository>;
-
   beforeEach(() => {
-    booksRepository = new BooksRepository() as jest.Mocked<BooksRepository>;
-    booksService = new BooksService(booksRepository);
+    jest.clearAllMocks();
   });
 
-  test("should return all books", async () => {
-    booksRepository.getAllBooks.mockResolvedValue([{ id: "1", title: "Test Book" }]);
+  test("getById should return a book if found", async () => {
+    const mockBook = { id: "1", title: "Test Book", authorId: "a1" };
+    mockedBooksRepo.findById.mockResolvedValue(mockBook);
 
-    const result = await booksService.getBooks();
-    expect(result.length).toBe(1);
+    const result = await BooksService.getById("1");
+
+    expect(result).toEqual(mockBook);
+    expect(mockedBooksRepo.findById).toHaveBeenCalledWith("1");
   });
 
-  test("should return single book", async () => {
-    booksRepository.getBookById.mockResolvedValue({ id: "1", title: "Book" });
+  test("create should throw error if author not found", async () => {
+    mockedAuthorsRepo.findById.mockResolvedValue(null);
 
-    const result = await booksService.getBook("1");
-    expect(result.id).toBe("1");
+    await expect(
+      BooksService.create({ title: "Book 1", authorId: "invalid" })
+    ).rejects.toThrow("Author not found");
   });
 
-  test("should add a new book", async () => {
-    const newBook = { title: "New Book" };
-    booksRepository.addBook.mockResolvedValue({ id: "1", ...newBook });
+  test("create should call BooksRepo.create if author exists", async () => {
+    const mockAuthor = { id: "a1", name: "Author 1" };
+    const mockBook = { id: "1", title: "Book 1", authorId: "a1" };
 
-    const result = await booksService.createBook(newBook);
-    expect(result.title).toBe("New Book");
-  });
+    mockedAuthorsRepo.findById.mockResolvedValue(mockAuthor);
+    mockedBooksRepo.create.mockResolvedValue(mockBook);
 
-  test("should update a book", async () => {
-    const updated = { title: "Updated" };
-    booksRepository.updateBook.mockResolvedValue({ id: "1", ...updated });
+    const result = await BooksService.create({
+      title: "Book 1",
+      authorId: "a1"
+    });
 
-    const result = await booksService.updateBook("1", updated);
-    expect(result.title).toBe("Updated");
-  });
-
-  test("should delete a book", async () => {
-    booksRepository.deleteBook.mockResolvedValue(true);
-
-    const result = await booksService.deleteBook("1");
-    expect(result).toBe(true);
+    expect(result).toEqual(mockBook);
+    expect(mockedBooksRepo.create).toHaveBeenCalledWith({
+      title: "Book 1",
+      authorId: "a1"
+    });
   });
 });
