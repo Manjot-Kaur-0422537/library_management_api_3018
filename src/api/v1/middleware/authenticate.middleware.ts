@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import * as admin from "firebase-admin"; 
+import * as admin from "firebase-admin";
 
-export const authMiddleware = async (
+export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -15,13 +15,13 @@ export const authMiddleware = async (
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = await admin.auth().verifyIdToken(token);
+    const decodedUser = await admin.auth().verifyIdToken(token);
 
-    (req as any).user = decoded;
+    (req as any).user = decodedUser; 
 
     next();
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("Authentication error:", error);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
