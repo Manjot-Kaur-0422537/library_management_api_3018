@@ -6,7 +6,9 @@ const borrowService = new BorrowService(new BorrowRepository());
 
 export const borrowBook = async (req: Request, res: Response) => {
   const borrowData = req.body;
-  const result = await borrowService.borrowBook(borrowData);
+Milestone-2
+  const result = await borrowService.borrowBook(borrowData); 
+
   res.json(result);
 };
 
